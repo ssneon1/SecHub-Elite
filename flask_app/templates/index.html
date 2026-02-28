@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Security Hub | 3GPP & Compliance Lab 2025</title>
+    <meta name="description"
+        content="Unified network security research lab: tool execution, DDoS handbook, and 3GPP/ITSAR compliance audit.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <div class="app-wrapper">
+        <!-- Navigation Sidebar (HUD) -->
+        <nav class="side-hud">
+            <div class="hud-logo">
+                <i data-lucide="shield-check" class="hud-icon"></i>
+            </div>
+            <div class="hud-tabs">
+                <button class="hud-btn active" data-tab="lab" title="Lab Control">
+                    <i data-lucide="terminal"></i>
+                </button>
+                <button class="hud-btn" data-tab="handbook" title="DDoS Handbook">
+                    <i data-lucide="book-open"></i>
+                </button>
+                <button class="hud-btn" data-tab="lab-setup" title="Lab Setup">
+                    <i data-lucide="flask-conical"></i>
+                </button>
+                <button class="hud-btn" data-tab="compliance" title="Regulatory Audit">
+                    <i data-lucide="scale"></i>
+                </button>
+            </div>
+            <div class="hud-footer">
+                <i data-lucide="activity" class="pulse-icon"></i>
+            </div>
+        </nav>
+
+        <div class="main-content">
+            <!-- Header -->
+            <header class="premium-header">
+                <div class="header-info">
+                    <span class="badge">Master Compliance Hub · 2025</span>
+                    <h1>Security Control <span class="gradient-text">Center</span></h1>
+                </div>
+                <div class="system-status">
+                    <div class="status-indicator">
+                        <span class="dot"></span>
+                        <span class="status-label">3GPP / ITSAR: COMPLIANT</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- TAB: LAB CONTROL -->
+            <section id="tab-lab" class="tab-pane active">
+                <div class="grid-lab-split">
+                    <!-- Config Card -->
+                    <div class="card glass config-col">
+                        <div class="card-header">
+                            <i data-lucide="sliders"></i>
+                            <h2>Parameters</h2>
+                        </div>
+                        <form id="lab-form">
+                            <div class="input-group">
+                                <label>Vector Selection</label>
+                                <select id="tool-select">
+                                    <option value="slowloris">🕸️ Slowloris (HTTP Resource Exhaustion)</option>
+                                    <option value="hping">📡 hping-lite (Custom Packet Crafting)</option>
+                                    <option value="test-slowloris">🧪 Diagnostic Self-Test</option>
+                                    <option value="dos-system">📋 System Wrapper Help</option>
+                                </select>
+                            </div>
+                            <div class="input-group" id="host-group">
+                                <label>Target Domain / IP</label>
+                                <input type="text" id="host-input" placeholder="e.g. internal-lab-01">
+                            </div>
+                            <div class="input-row" id="params-row">
+                                <div class="input-group">
+                                    <label>Port</label>
+                                    <input type="number" id="port-input" value="80">
+                                </div>
+                                <div class="input-group">
+                                    <label id="extra-label">Sockets</label>
+                                    <input type="text" id="extra-input" value="150">
+                                </div>
+                            </div>
+                            <div class="warning-notice">
+                                <i data-lucide="alert-octagon"></i>
+                                <p>Session bound by ITSAR UPF Req 2.8.1. Authorized research environments only.</p>
+                            </div>
+                            <button type="submit" id="run-btn" class="btn-primary">
+                                <i data-lucide="zap"></i> Initiate Sequence
+                            </button>
+                            <button type="button" id="stop-btn" class="btn-danger hidden">
+                                <i data-lucide="stop-circle"></i> Abort Operation
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Right Panels (Stacked Split) -->
+                    <div class="right-col">
+
+                        <!-- Attack Log Terminal -->
+                        <div class="card terminal-card">
+                            <div class="card-header">
+                                <h2>Live Stream</h2>
+                                <div class="header-badges">
+                                    <span class="stream-badge" id="stream-status">IDLE</span>
+                                </div>
+                                <button id="clear-btn" class="icon-only" title="Clean Terminal">
+                                    <i data-lucide="trash"></i>
+                                </button>
+                            </div>
+                            <div id="terminal" class="terminal-body">
+                                <div class="terminal-placeholder">
+                                    <i data-lucide="radio" class="fade-icon"></i>
+                                    <p>Establishing uplink...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Network Monitor (Wireshark-style) -->
+                        <div class="card monitor-card">
+                            <div class="card-header">
+                                <h2>Capture Stream</h2>
+                                <span class="monitor-badge">LIVE</span>
+                            </div>
+                            <div class="monitor-body">
+                                <div class="stats-row">
+                                    <div class="stat-block">
+                                        <span class="stat-label">Events</span>
+                                        <span class="stat-value" id="stat-connections">0</span>
+                                    </div>
+                                    <div class="stat-block success">
+                                        <span class="stat-label">Success</span>
+                                        <span class="stat-value" id="stat-success">0</span>
+                                    </div>
+                                    <div class="stat-block error">
+                                        <span class="stat-label">Errors</span>
+                                        <span class="stat-value" id="stat-errors">0</span>
+                                    </div>
+                                    <div class="stat-block warning">
+                                        <span class="stat-label">Warnings</span>
+                                        <span class="stat-value" id="stat-warnings">0</span>
+                                    </div>
+                                    <div class="stat-block">
+                                        <span class="stat-label">Elapsed</span>
+                                        <span class="stat-value" id="stat-elapsed">00:00</span>
+                                    </div>
+                                </div>
+                                <div class="packet-table-wrap">
+                                    <table class="packet-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Time</th>
+                                                <th>Source</th>
+                                                <th>Protocol</th>
+                                                <th>Info</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="packet-log">
+                                            <tr class="empty-row">
+                                                <td colspan="6">No packets captured yet...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /right-col -->
+
+                </div>
+            </section>
+
+            <!-- ============================== -->
+            <!-- TAB: HANDBOOK                  -->
+            <!-- ============================== -->
+            <section id="tab-handbook" class="tab-pane">
+                <div class="handbook-container">
+
+                    <!-- DoS vs DDoS Comparison -->
+                    <div class="comparison-grid">
+                        <div class="vs-card doS">
+                            <span class="tag red">Single Point</span>
+                            <h3>DoS</h3>
+                            <p class="vs-sub">One Machine ➔ One Service</p>
+                            <ul>
+                                <li><strong>Mechanism:</strong> Flooding from a single source</li>
+                                <li><strong>Detection:</strong> Unusually slow access, timeouts</li>
+                                <li><strong>Tool:</strong> hping3 (LAND, SMURF, SYN)</li>
+                                <li><strong>Status:</strong> Often used as 'Probing'</li>
+                            </ul>
+                        </div>
+                        <div class="vs-card ddos">
+                            <span class="tag blue">Distributed Swarm</span>
+                            <h3>DDoS</h3>
+                            <p class="vs-sub">Global Botnet Logic</p>
+                            <ul>
+                                <li><strong>Mechanism:</strong> Million-node botnets (Infected IoT)</li>
+                                <li><strong>Detection:</strong> High CPU/Memory, repeat source IPs</li>
+                                <li><strong>Tool:</strong> Botnet C2, Slowloris, R.U.D.Y</li>
+                                <li><strong>Scale:</strong> Record 7.3 Tbps (2025)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Attack Taxonomy -->
+                    <div class="content-card">
+                        <h2><i data-lucide="layers"></i> Attack Taxonomy & Lab Simulation</h2>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <h4>Volume & Protocol (L3/L4)</h4>
+                                <ul class="bullet-list">
+                                    <li><strong>Random Source Attack:</strong> Randomized src IPs confuse tracebacks &
+                                        ACLs.</li>
+                                    <li><strong>SMURF Attack:</strong> Poisoned ICMP echo requests broadcasted to
+                                        target.</li>
+                                    <li><strong>LAND Attack:</strong> Src/Dst IP = target IP, loops kernel resources to
+                                        OOM.</li>
+                                    <li><strong>SYN Flood:</strong> Half-open attack exhausts TCP handshake table
+                                        (backlog overflow).</li>
+                                    <li><strong>UDP Fragmentation:</strong> Oversized datagrams exhaust IP reassembly
+                                        buffers.</li>
+                                </ul>
+                                <div class="code-snippet">
+                                    <div class="snippet-header"><span>SMURF / LAND LAB COMMANDS (hping3)</span></div>
+                                    <pre># SMURF Attack
+hping3 --icmp --flood 127.0.0.1 -a 127.0.0.1
+
+# LAND Attack
+hping3 -S -p 80 127.0.0.1 -a 127.0.0.1
+
+# SYN Flood with random src IP
+hping3 -S --flood -V -p 80 --rand-source [TARGET]</pre>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <h4>Application Layer (L7)</h4>
+                                <ul class="bullet-list">
+                                    <li><strong>Slowloris:</strong> Thousands of lingering partial HTTP requests keep
+                                        threads open.</li>
+                                    <li><strong>R.U.D.Y:</strong> "R U Dead Yet?" - posts files byte-by-byte to exhaust
+                                        threads.</li>
+                                    <li><strong>HTTP/2 Rapid Reset:</strong> Exploits RST_STREAM burst for CPU spikes
+                                        (CVE-2023-44487).</li>
+                                    <li><strong>AI-Driven Bots:</strong> Mimic human traffic patterns to bypass legacy
+                                        WAF rules.</li>
+                                    <li><strong>Cache Busting:</strong> Cache-miss floods origin server by bypassing CDN
+                                        cache.</li>
+                                </ul>
+                                <div class="code-snippet">
+                                    <div class="snippet-header"><span>SLOWLORIS WORKFLOW</span></div>
+                                    <pre>1. Open N partial HTTP connections
+2. Send headers every ~15s to keep alive
+3. Never complete the request
+4. Apache thread pool = EXHAUSTED</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2025 Threat Scenery -->
+                    <div class="content-card">
+                        <h2><i data-lucide="trending-up"></i> 2025 Threat Scenery</h2>
+                        <div class="trend-grid">
+                            <div class="trend-box">
+                                <span class="trend-tag">Hyper-Volumetric</span>
+                                <h4>Tbps-Scale Attacks</h4>
+                                <p>Exploiting vulnerable IoT/Edge nodes to generate traffic exceeding 10 Tbps, targeting
+                                    core ISP infrastructure and saturating upstream links.</p>
+                            </div>
+                            <div class="trend-box">
+                                <span class="trend-tag">Adaptive</span>
+                                <h4>Dynamic Payload Switching</h4>
+                                <p>Attacks auto-shift protocols (TCP → UDP → QUIC) when mitigation fingerprints are
+                                    detected, making signature-based defenses ineffective.</p>
+                            </div>
+                            <div class="trend-box">
+                                <span class="trend-tag">AI-Powered</span>
+                                <h4>Behavioral Evasion</h4>
+                                <p>LLM-trained bots mimic real user sessions including scroll timing, click patterns,
+                                    and JS execution to bypass advanced bot protection.</p>
+                            </div>
+                            <div class="trend-box">
+                                <span class="trend-tag">5G / Edge</span>
+                                <h4>Network Slice Targeting</h4>
+                                <p>Attacks target a specific 5G network slice (e.g., IoT slice) to cause
+                                    denial-of-service on mission-critical slices (uRLLC, eMBB).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Application Layer Architecture -->
+                    <div class="content-card">
+                        <h2><i data-lucide="server"></i> Application Layer Architecture</h2>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <h4>Server Architecture Models</h4>
+                                <ul class="bullet-list">
+                                    <li><strong>Thread-based (Apache):</strong> Creates new thread/process per request.
+                                        High resource drain. <span class="tag-inline red">VULNERABLE to Slowloris</span>
+                                    </li>
+                                    <li><strong>Event-based (Nginx):</strong> Same thread handles multiple requests via
+                                        event loop. <span class="tag-inline green">RESISTANT</span></li>
+                                    <li><strong>Async (Node.js/Go):</strong> Non-blocking I/O naturally limits thread
+                                        exhaustion.</li>
+                                </ul>
+                            </div>
+                            <div class="info-item">
+                                <h4>Defense & SOC Operations</h4>
+                                <ul class="bullet-list">
+                                    <li><strong>ICMP Rate Limiting:</strong> Enforced at OS/firewall level to cap flood
+                                        volume.</li>
+                                    <li><strong>Fingerprint Filtering:</strong> Identify specific attack signatures in
+                                        UDP data segments.</li>
+                                    <li><strong>WAF Challenge:</strong> reCAPTCHA v2/v3 on suspicious GET/POST spikes.
+                                    </li>
+                                    <li><strong>Anycast Routing:</strong> Spread incoming flood across global POP nodes.
+                                    </li>
+                                </ul>
+                                <div class="code-snippet">
+                                    <div class="snippet-header"><span>NGINX RATE LIMIT CONFIG</span></div>
+                                    <pre># Limit to 5 requests/sec per IP
+limit_req_zone $binary_remote_addr
+  zone=one:10m rate=5r/s;
+
+server {
+  location / {
+    limit_req zone=one burst=10;
+  }
+}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ultimate Secure Architecture -->
+                    <div class="content-card">
+                        <h2><i data-lucide="lock"></i> Ultimate Secure Architecture</h2>
+                        <div class="arch-map">
+                            USERS <span>➔</span> CLOUDFLARE CDN <span>➔</span> AWS SHIELD <span>➔</span> AWS WAF
+                            <span>➔</span> ELB <span>➔</span> AUTO-SCALING EC2 <span>➔</span> REDIS / DB
+                        </div>
+                        <div class="arch-features">
+                            <div class="arch-feature">
+                                <strong>Restricting RAM</strong>
+                                <p>Prevents app-layer crashes (ITSAR req 2.8.1).</p>
+                            </div>
+                            <div class="arch-feature">
+                                <strong>Session Guard</strong>
+                                <p>Caps maximum concurrent sessions per web app.</p>
+                            </div>
+                            <div class="arch-feature">
+                                <strong>IP Throttling</strong>
+                                <p>Limits transactions per IP within time windows.</p>
+                            </div>
+                            <div class="arch-feature">
+                                <strong>Auto-Scaling</strong>
+                                <p>Horizontal scaling absorbs volumetric burst attacks.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================== -->
+            <!-- TAB: LAB SETUP                 -->
+            <!-- ============================== -->
+            <section id="tab-lab-setup" class="tab-pane">
+                <div class="handbook-container">
+                    <div class="content-card">
+                        <h2><i data-lucide="flask-conical"></i> Testing Lab Setup</h2>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <h4>Tester Node (Ubuntu 22.04)</h4>
+                                <p style="color: var(--text-dim); margin-bottom: 1.5rem;">Uses <strong>hping3</strong>
+                                    or this lab's Python tools to generate custom ICMP/UDP/TCP packets.</p>
+                                <div class="code-snippet">
+                                    <div class="snippet-header"><span>ICMP FLOOD (hping3)</span></div>
+                                    <pre># ICMP Flood with Max Payload
+sudo hping3 -d 65495 --icmp --flood [TARGET_IP]
+
+# TCP SYN Flood (High Load Test)
+sudo hping3 -d 65495 --syn --flood [TARGET_IP]
+
+# UDP Flood on target port
+sudo hping3 -2 -p 80 --flood [TARGET_IP]</pre>
+                                </div>
+                                <div class="code-snippet" style="margin-top: 1.5rem;">
+                                    <div class="snippet-header"><span>SLOWLORIS (This Tool)</span></div>
+                                    <pre># Run Slowloris simulation
+python tools/python/slowloris_sim.py [TARGET] -p 80 -s 150
+
+# Run unit tests
+python tools/python/test_slowloris.py</pre>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <h4>DUT Node (Device Under Test)</h4>
+                                <p style="color: var(--text-dim); margin-bottom: 1.5rem;">Monitored via Wireshark &
+                                    Network Traffic Analysis to confirm symptoms (Latency, OOM, Unavailability).</p>
+                                <div class="check-box">
+                                    <strong>✅ Test Confirmation Criteria</strong>
+                                    <ul class="bullet-list" style="margin-top: 1rem;">
+                                        <li>Network traffic shows packet frequency spikes</li>
+                                        <li>CPU utilization exceeds 90% on DUT</li>
+                                        <li>HTTP response times degrade beyond SLA</li>
+                                        <li>TCP connection table shows high half-open count</li>
+                                        <li>Service becomes unavailable (HTTP 503)</li>
+                                    </ul>
+                                </div>
+                                <div class="check-box"
+                                    style="margin-top: 1.5rem; border-color: rgba(56,189,248,0.2); background: rgba(56,189,248,0.03);">
+                                    <strong style="color: var(--primary);">📊 Wireshark Filters</strong>
+                                    <div class="code-snippet" style="margin-top: 1rem;">
+                                        <div class="snippet-header"><span>DISPLAY FILTERS</span></div>
+                                        <pre># SYN Flood detection
+tcp.flags.syn==1 && tcp.flags.ack==0
+
+# ICMP flood
+icmp && icmp.type==8
+
+# HTTP partial headers (Slowloris)
+tcp && tcp.len > 0 && !http</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-card">
+                        <h2><i data-lucide="network"></i> Network Topology Overview</h2>
+                        <div class="arch-map" style="font-size: 0.9rem; letter-spacing: 1px; line-height: 2.5;">
+                            [TESTER: Ubuntu 22.04] <span>──────</span> [SWITCH/LAB LAN] <span>──────</span> [DUT:
+                            Windows Server / Linux]<br>
+                            <span style="color: rgba(148,163,184,0.4);"> hping3 / slowloris Wireshark + CPU
+                                Monitor</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================== -->
+            <!-- TAB: COMPLIANCE                -->
+            <!-- ============================== -->
+            <section id="tab-compliance" class="tab-pane">
+                <div class="handbook-container">
+                    <div class="content-card" style="border-left: 4px solid var(--accent);">
+                        <h2><i data-lucide="scale"></i> ITSAR / 3GPP Regulatory Context</h2>
+                        <p style="color: var(--text-dim); margin-bottom: 2rem;">DDoS protection is not just an IT choice
+                            — it is a <strong>mandatory regulatory requirement</strong> for modern network elements (NE)
+                            like the <strong>UPF (User Plane Function)</strong> in 5G Core.</p>
+                        <div class="compliance-grid">
+                            <div class="audit-box">
+                                <h3>3GPP § 4.2.3.3.1 — Overload Protection</h3>
+                                <p>System handling during overload situations. NE shall have protection mechanisms
+                                    against Network and Application-level DDoS attacks to deal with overload situations
+                                    from attack generators or increased traffic.</p>
+                            </div>
+                            <div class="audit-box highlight">
+                                <h3>ITSAR UPF Req 2.8.1 — Resource Limits</h3>
+                                <p>Requirement for limiting RAM per application, maximum sessions, CPU resources per
+                                    process, and transaction volume per IP to avoid impairment of availability. Applies
+                                    directly to 5G UPF components.</p>
+                            </div>
+                            <div class="audit-box">
+                                <h3>3GPP § 4.2.3.3.3 — Controlled Degradation</h3>
+                                <p>Excessive Overload Protection. The system must act predictably. In extreme cases, a
+                                    controlled system shutdown is preferable to uncontrolled failure of security
+                                    functions.</p>
+                            </div>
+                            <div class="audit-box">
+                                <h3>Network Slicing Security — 5G NSA/SA</h3>
+                                <p>DDoS protection must be slice-aware. An attack on one slice (e.g., IoT/mMTC) must not
+                                    impair the availability of mission-critical slices (uRLLC) such as autonomous
+                                    vehicles or industrial control systems.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-card">
+                        <h2><i data-lucide="clipboard-list"></i> Compliance Checklist</h2>
+                        <div class="checklist">
+                            <label class="check-item">
+                                <input type="checkbox" checked>
+                                <span>ICMP Rate Limiting implemented at OS / Firewall level</span>
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" checked>
+                                <span>RAM limit per application process enforced (ITSAR 2.8.1)</span>
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" checked>
+                                <span>Maximum concurrent sessions capped per service</span>
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox">
+                                <span>Transaction volume per IP monitored and rate-limited</span>
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox">
+                                <span>Controlled shutdown procedure documented (3GPP 4.2.3.3.3)</span>
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox">
+                                <span>Slice-aware DDoS protection deployed (5G NSA/SA)</span>
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox">
+                                <span>SOC monitoring configured with automated alerting thresholds</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div><!-- /main-content -->
+    </div><!-- /app-wrapper -->
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
