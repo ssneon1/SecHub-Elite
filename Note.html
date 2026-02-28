@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoS & DDoS · Modern Elite Handbook & Compliance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --accent: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --glass: rgba(255, 255, 255, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.05) 0px, transparent 50%);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 5rem;
+        }
+
+        .header-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: #dbeafe;
+            color: var(--primary);
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #bfdbfe;
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: 600;
+            letter-spacing: -0.05em;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            font-size: 2.25rem;
+            font-weight: 600;
+            margin: 4rem 0 2rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #0f172a;
+        }
+
+        h2 span {
+            color: var(--primary);
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass);
+            border-radius: 2rem;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .compliance-box {
+            background: #fdf2f2;
+            border: 1px solid #fecaca;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .compliance-box strong {
+            color: #dc2626;
+        }
+
+        .vs-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .vs-card {
+            padding: 2.5rem;
+            border-radius: 2.5rem;
+            height: 100%;
+        }
+
+        .vs-dos {
+            background: #fff8f8;
+            border: 1px solid #fee2e2;
+        }
+
+        .vs-ddos {
+            background: #f0f9ff;
+            border: 1px solid #e0f2fe;
+        }
+
+        .vs-divider {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: white;
+            padding: 1rem;
+            border-radius: 50%;
+            box-shadow: var(--shadow);
+            z-index: 10;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            color: var(--text-main);
+        }
+
+        li::before {
+            content: "→";
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .code-block {
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 1.2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            position: relative;
+            line-height: 1.7;
+        }
+
+        .code-block::before {
+            content: "SHELL";
+            position: absolute;
+            top: 0.5rem;
+            right: 1.2rem;
+            font-size: 0.7rem;
+            color: #475569;
+            letter-spacing: 0.1em;
+        }
+
+        .trend-node {
+            border-left: 3px solid var(--primary);
+            padding-left: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .tag {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .tag-red {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        .tag-blue {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .tag-purple {
+            background: #f3e8ff;
+            color: #9333ea;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: white;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        th {
+            text-align: left;
+            padding: 1.25rem;
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        td {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+        }
+
+        .img-card {
+            margin: 2rem 0;
+            border-radius: 2rem;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            background: white;
+            text-align: center;
+        }
+
+        .img-card img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .img-caption {
+            padding: 1.5rem;
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .architecture-diagram {
+            background: #0f172a;
+            padding: 2.5rem;
+            border-radius: 2.5rem;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: #38bdf8;
+            margin: 2rem 0;
+            box-shadow: var(--shadow);
+            border: 1px solid #1e293b;
+        }
+
+        .mono-inline {
+            background: #e2e8f0;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 5rem 0 2rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border);
+            margin-top: 4rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .vs-container {
+                grid-template-columns: 1fr;
+            }
+
+            .vs-divider {
+                display: none;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <span class="header-badge">MASTER COMPLIANCE AUDIT 2025</span>
+            <h1>The DDoS Handbook</h1>
+            <p class="subtitle">Unified notes on single-source attacks, 3GPP/ITSAR regulatory standards, and
+                high-performance mitigation architecture.</p>
+        </header>
+
+        <!-- Compliance & Regulatory Context (NEW) -->
+        <div class="card" style="border-left: 6px solid #ef4444;">
+            <h2><span>⚖️</span> ITSAR / 3GPP Regulatory Context</h2>
+            <p style="margin-bottom: 1rem;">DDoS protection is not just an IT choice; it's a mandatory regulatory
+                requirement for modern network elements (NE) like UPF (User Plane Function).</p>
+
+            <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="compliance-box">
+                    <strong>Section 4.2.3.3.1</strong>
+                    <p>System handling during overload situations. NE shall have protection mechanisms against Network
+                        and Application-level DDoS attacks to deal with overload situations from attack generators or
+                        increased traffic.</p>
+                </div>
+                <div class="compliance-box">
+                    <strong>Section 4.2.3.3.3</strong>
+                    <p>Excessive Overload Protection. The system must act predictably. In extreme cases, a controlled
+                        system shutdown is preferable to uncontrolled failure of security functions.</p>
+                </div>
+            </div>
+
+            <div class="compliance-box" style="background:#eff6ff; border-color:#bfdbfe;">
+                <strong style="color:var(--primary);">ITSAR UPF Requirement 2.8.1</strong>
+                <p>Requirement for limiting RAM per application, maximum sessions, CPU resources per process, and
+                    transaction volume per IP to avoid impairment of availability.</p>
+            </div>
+        </div>
+
+        <!-- DoS vs DDoS Master Comparison -->
+        <div class="vs-container">
+            <div class="vs-card vs-dos">
+                <span class="tag tag-red">Single Point</span>
+                <h3 style="font-size: 2.2rem; margin: 1rem 0;">DoS</h3>
+                <p style="color: #ef4444; font-weight: 500; margin-bottom: 1.5rem;">One Machine ➔ One Service</p>
+                <ul>
+                    <li><strong>Mechanism:</strong> Flooding from a single source</li>
+                    <li><strong>Detection:</strong> Symptoms: unusually slow access, timeouts</li>
+                    <li><strong>Tool:</strong> hping3 (LAND, SMURF, SYN)</li>
+                    <li><strong>Status:</strong> Often used as 'Probing'</li>
+                </ul>
+            </div>
+            <div class="vs-divider">VS</div>
+            <div class="vs-card vs-ddos">
+                <span class="tag tag-blue">Global Swarm</span>
+                <h3 style="font-size: 2.2rem; margin: 1rem 0;">DDoS</h3>
+                <p style="color: #2563eb; font-weight: 500; margin-bottom: 1.5rem;">Distributed Botnet Logic</p>
+                <ul>
+                    <li><strong>Mechanism:</strong> Million-node botnets (Infected IoT)</li>
+                    <li><strong>Detection:</strong> High CPU/Memory, thousands of repeat IPs</li>
+                    <li><strong>Tool:</strong> Botnet C2, Slowloris, R.U.D.Y</li>
+                    <li><strong>Scale:</strong> Record 7.3 Tbps (2025)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Botnet Architecture Visual (NEW IMAGE) -->
+        <div class="img-card">
+            <img src="botnet_architecture_diagram_1772259928146.png" alt="Botnet Architecture">
+            <div class="img-caption">Figure 1.0: Botnet propagation from Command & Control (C2) to victim targets via
+                infected IoT nodes.</div>
+        </div>
+
+        <!-- Attack Taxonomy: Detailed Lab Specs (NEW) -->
+        <div class="card">
+            <h2><span>🧬</span> Attack Taxonomy & Lab Simulation</h2>
+            <div class="grid">
+                <div>
+                    <h4 style="margin-bottom:1rem;">Volume & Protocol Based</h4>
+                    <ul style="margin-bottom:1.5rem;">
+                        <li><strong>Random Source Attack:</strong> Diff source addresses confuse tracebacks.</li>
+                        <li><strong>SMURF Attack:</strong> Poisoned ICMP echo requests broadcasted to target.</li>
+                        <li><strong>LAND Attack:</strong> Src/Dst IP matches target to loop kernel resources.</li>
+                        <li><strong>SYN Flood:</strong> Half-open attack exhausts TCP handshake table.</li>
+                    </ul>
+                    <div class="code-block">
+                        # SMURF Attack Example
+                        # hping3 --icmp --flood 127.0.0.1 -a 127.0.0.1
+
+                        # LAND Attack Example
+                        # hping3 -S -p 80 127.0.0.1 -a 127.0.0.1
+                    </div>
+                </div>
+                <div>
+                    <div class="img-card" style="margin:0;">
+                        <img src="syn_flood_handshake_logic_1772259949119.png" alt="Handshake Logic">
+                        <div class="img-caption">Logic flow of a SYN Flood "Half-Open" exhaustion.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lab Setup Configuration (NEW) -->
+        <div class="card">
+            <h2><span>🔬</span> Testing Lab Setup</h2>
+            <div class="grid">
+                <div>
+                    <h4 style="margin-bottom:1rem;">Tester Node (Ubuntu 22.04)</h4>
+                    <p>Uses <strong>hping3</strong> to generate custom ICMP/UDP/TCP packets.</p>
+                    <div class="code-block">
+                        # ICMP Flood with Payload
+                        sudo hping3 -d 65495 --icmp --flood [TARGET_IP]
+
+                        # TCP SYN Flood (High Load)
+                        sudo hping3 -d 65495 --syn --flood [TARGET_IP]
+                    </div>
+                </div>
+                <div>
+                    <h4 style="margin-bottom:1rem;">DUT Node (Windows 10/Server)</h4>
+                    <p>Monitored via Wireshark and Network Traffic Analysis to confirm symptoms (Latency,
+                        Unavailability).</p>
+                    <div class="trend-node" style="border-color: #fbbf24; background: #fffbeb; padding: 1rem;">
+                        <strong>Confirm Test:</strong> Done via network traffic monitoring and analysis showing packet
+                        frequency spikes.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Web Server Architecture & Slowloris (NEW) -->
+        <div class="card">
+            <h2><span>📡</span> Application Layer Architecture</h2>
+            <div class="grid">
+                <div>
+                    <h4>Architecture Models</h4>
+                    <ul>
+                        <li><strong>Thread-based (Apache):</strong> Creates new thread/process per request. High
+                            resource drain. VULNERABLE to Slowloris.</li>
+                        <li><strong>Event-based (Nginx):</strong> Uses same thread to handle multiple requests
+                            efficiently. Highly resistant.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Slowloris Workflow</h4>
+                    <ol style="margin-left:1.5rem; color: var(--text-main);">
+                        <li>Make thousands of partial HTTP requests.</li>
+                        <li>Send headers periodically (~15s) to stay open.</li>
+                        <li>Never close connections. Thread pool exhausted.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Defense & SOC Mockup (NEW IMAGE) -->
+        <div class="card">
+            <h2><span>🛡️</span> Mitigation & SOC Operations</h2>
+            <div class="grid" style="grid-template-columns: 1fr 1.5fr;">
+                <div>
+                    <h4>Advanced Mitigation</h4>
+                    <ul>
+                        <li><strong>ICMP Rate Limiting:</strong> Enforced at the OS level.</li>
+                        <li><strong>Fingerprint Filtering:</strong> Identify specific attack features in UDP data
+                            segments.</li>
+                        <li><strong>WAF Challenge:</strong> Force reCAPTCHA (v2/v3) on suspicious GET requests.</li>
+                    </ul>
+                    <div class="code-block">
+                        # Nginx Rate Limit (429 Error)
+                        limit_req_zone $binary_remote_addr
+                        zone=one:10m rate=5r/s;
+                    </div>
+                </div>
+                <div>
+                    <div class="img-card" style="margin:0;">
+                        <img src="modern_soc_dashboard_mockup_1772259966597.png" alt="SOC Dashboard">
+                        <div class="img-caption">Figure 2.0: AI-enhanced SOC dashboard for multi-vector threat
+                            detection.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Secure Architecture -->
+        <div class="card">
+            <h2><span>🔐</span> Ultimate Secure Architecture</h2>
+            <div class="architecture-diagram">
+                USERS ➔ CLOUDFLARE CDN ➔ AWS SHIELD ➔ AWS WAF ➔ ELB ➔ AUTO-SCALING EC2 ➔ REDIS/DB
+            </div>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div style="background:#f1f5f9; padding:1.5rem; border-radius:1.5rem;">
+                    <strong>Restricting RAM:</strong> Prevents app-layer crashes (ITSAR req).
+                </div>
+                <div style="background:#f1f5f9; padding:1.5rem; border-radius:1.5rem;">
+                    <strong>Session Guard:</strong> Caps maximum sessions per Web app.
+                </div>
+                <div style="background:#f1f5f9; padding:1.5rem; border-radius:1.5rem;">
+                    <strong>IP Throttling:</strong> Limits transactions in specific time ranges.
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Production-Grade Security Handbook • V5.0.0-Compliance • Verified 3GPP/ITSAR</p>
+            <p style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--text-muted);">This document serves as a master
+                audit guide for incident response and regulatory filings.</p>
+        </footer>
+    </div>
+
+    <script>
+        (function () {
+            console.log("🛡️ Master Handbook & Compliance Logic Loaded. Status: COMPLIANT.");
+        })();
+    </script>
+</body>
+
+</html>
