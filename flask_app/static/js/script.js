@@ -12,11 +12,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const portInput = document.getElementById('port-input');
     const extraInput = document.getElementById('extra-input');
     const extraLabel = document.getElementById('extra-label');
+    const ipsInput = document.getElementById('ips-input');
+    const ipsGroup = document.getElementById('ips-group');
+    const hostLabel = document.getElementById('host-label');
+    const rotateInput = document.getElementById('rotate-input');
+    const rotateGroup = document.getElementById('rotate-group');
+    const floodInput = document.getElementById('flood-input');
+    const floodItem = document.getElementById('flood-item');
+    const pathInput = document.getElementById('path-input');
+    const pathGroup = document.getElementById('path-group');
+    const cacheBustInput = document.getElementById('cache-bust-input');
+    const cacheBustItem = document.getElementById('cache-bust-item');
     const paramsRow = document.getElementById('params-row');
     const terminal = document.getElementById('terminal');
     const runBtn = document.getElementById('run-btn');
     const stopBtn = document.getElementById('stop-btn');
     const clearBtn = document.getElementById('clear-btn');
+    const ipInfoBtn = document.getElementById('ip-info-btn');
 
     // Monitor elements
     const streamStatus = document.getElementById('stream-status');
@@ -56,19 +68,52 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toolSelect) {
         toolSelect.addEventListener('change', () => {
             const val = toolSelect.value;
+            // Reset defaults
+            hostGroup.classList.remove('hidden');
+            paramsRow.classList.remove('hidden');
+            ipsGroup.classList.remove('hidden');
+            rotateGroup.classList.add('hidden');
+            floodItem.classList.add('hidden');
+            pathGroup.classList.add('hidden');
+            cacheBustItem.classList.add('hidden');
+            hostLabel.textContent = 'Target Domain / IP';
+            extraLabel.textContent = 'Extra';
+
             if (val === 'slowloris') {
                 extraLabel.textContent = 'Sockets';
                 extraInput.value = '150';
-                hostGroup.classList.remove('hidden');
-                paramsRow.classList.remove('hidden');
+                rotateGroup.classList.remove('hidden');
+                floodItem.classList.remove('hidden'); // Show flood option for Slowloris
+                pathGroup.classList.remove('hidden');
+                cacheBustItem.classList.remove('hidden');
+            } else if (val === 'botnet') {
+                extraLabel.textContent = 'Bot Count';
+                extraInput.value = '3';
+                rotateGroup.classList.remove('hidden');
+                floodItem.classList.remove('hidden');
+            } else if (val === 'reflection') {
+                hostLabel.textContent = 'Victim IP';
+                extraLabel.textContent = 'Reflector IP';
+                extraInput.value = '';
+                ipsGroup.classList.add('hidden');
             } else if (val === 'hping') {
-                extraLabel.textContent = 'Protocol';
+                extraLabel.textContent = 'Packet Type';
                 extraInput.value = 'tcp';
-                hostGroup.classList.remove('hidden');
-                paramsRow.classList.remove('hidden');
-            } else {
+                ipsGroup.classList.add('hidden');
+                rotateGroup.classList.remove('hidden');
+                floodItem.classList.remove('hidden');
+            } else if (val === 'discover') {
                 hostGroup.classList.add('hidden');
                 paramsRow.classList.add('hidden');
+                ipsGroup.classList.add('hidden');
+            } else if (val === 'lab-server') {
+                hostGroup.classList.add('hidden');
+                paramsRow.classList.add('hidden');
+                ipsGroup.classList.add('hidden');
+            } else if (val === 'test-slowloris') {
+                hostGroup.classList.add('hidden');
+                paramsRow.classList.add('hidden');
+                ipsGroup.classList.add('hidden');
             }
         });
     }
@@ -126,13 +171,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (packetLog.parentElement) packetLog.parentElement.scrollTop = packetLog.parentElement.scrollHeight;
     };
 
-    const startMonitor = () => {
+    const resetStats = () => {
         monitorStats = { total: 0, success: 0, errors: 0, warnings: 0, packetNum: 0 };
         if (statConnections) statConnections.textContent = '0';
         if (statSuccess) statSuccess.textContent = '0';
         if (statErrors) statErrors.textContent = '0';
         if (statWarnings) statWarnings.textContent = '0';
         if (statElapsed) statElapsed.textContent = '00:00';
+    };
+
+    const startMonitor = () => {
+        resetStats();
         if (packetLog) packetLog.innerHTML = '<tr class="empty-row"><td colspan="6">Initializing capture...</td></tr>';
 
         if (streamStatus) {
@@ -192,78 +241,92 @@ document.addEventListener('DOMContentLoaded', () => {
     // =============================================
     // Execution Engine — Form Submit
     // =============================================
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+    async function runTool(isIpInfo = false, ipInfoPayload = {}) {
+        startMonitor();
+        activeAbortController = new AbortController();
 
-            startMonitor();
-            activeAbortController = new AbortController();
+        const payload = isIpInfo ? ipInfoPayload : {
+            tool: toolSelect.value,
+            host: hostInput.value,
+            port: portInput.value,
+            extra: extraInput.value,
+            ips: ipsInput.value,
+            rotate: rotateInput.checked,
+            flood: floodInput.checked,
+            path: pathInput.value,
+            cache_bust: cacheBustInput.checked
+        };
 
-            const payload = {
-                tool: toolSelect ? toolSelect.value : 'slowloris',
-                host: hostInput ? hostInput.value : '',
-                port: portInput ? portInput.value : '80',
-                extra: extraInput ? extraInput.value : ''
-            };
+        if (runBtn) runBtn.classList.add('hidden');
+        if (stopBtn) stopBtn.classList.remove('hidden');
 
-            if (runBtn) runBtn.classList.add('hidden');
-            if (stopBtn) stopBtn.classList.remove('hidden');
+        addLog({ text: `BOOTING ${payload.tool.toUpperCase()} MODULE...`, color: 'warning', bold: true });
 
-            addLog({ text: `BOOTING ${payload.tool.toUpperCase()} MODULE...`, color: 'warning', bold: true });
+        try {
+            const response = await fetch('/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: activeAbortController.signal
+            });
 
-            try {
-                const response = await fetch('/run', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                    signal: activeAbortController.signal
-                });
-
-                if (!response.ok) {
-                    const err = await response.json().catch(() => ({ error: 'Unknown error' }));
-                    addLog({ text: `CRITICAL ERROR: ${err.error}`, color: 'error' });
-                    resetUI();
-                    return;
-                }
-
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
-
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-                    const events = buffer.split('\n\n');
-                    buffer = events.pop(); // keep partial
-
-                    events.forEach(event => {
-                        const trimmed = event.trim();
-                        if (!trimmed.startsWith('data: ')) return;
-
-                        const parts = trimmed.split('\ndata: ');
-                        parts.forEach(part => {
-                            try {
-                                const jsonStr = part.replace(/^data:\s*/, '').trim();
-                                if (jsonStr) addLog(JSON.parse(jsonStr));
-                            } catch (_) { /* ignore malformed chunks */ }
-                        });
-                    });
-                }
-
-                addLog({ text: 'SEQUENCE COMPLETED SUCCESSFULLY.', color: 'success', bold: true });
-
-            } catch (err) {
-                if (err.name === 'AbortError') {
-                    addLog({ text: 'OPERATION ABORTED BY OPERATOR.', color: 'error', bold: true });
-                } else {
-                    addLog({ text: `UPLINK FAILURE: ${err.message}`, color: 'error' });
-                }
-            } finally {
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+                addLog({ text: `CRITICAL ERROR: ${err.error}`, color: 'error' });
                 resetUI();
-                activeAbortController = null;
+                return;
             }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const events = buffer.split('\n\n');
+                buffer = events.pop(); // keep partial
+
+                events.forEach(event => {
+                    const trimmed = event.trim();
+                    if (!trimmed.startsWith('data: ')) return;
+
+                    const parts = trimmed.split('\ndata: ');
+                    parts.forEach(part => {
+                        try {
+                            const jsonStr = part.replace(/^data:\s*/, '').trim();
+                            if (jsonStr) addLog(JSON.parse(jsonStr));
+                        } catch (_) { /* ignore malformed chunks */ }
+                    });
+                });
+            }
+
+            addLog({ text: 'SEQUENCE COMPLETED SUCCESSFULLY.', color: 'success', bold: true });
+
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                addLog({ text: 'OPERATION ABORTED BY OPERATOR.', color: 'error', bold: true });
+            } else {
+                addLog({ text: `UPLINK FAILURE: ${err.message}`, color: 'error' });
+            }
+        } finally {
+            resetUI();
+            activeAbortController = null;
+        }
+    }
+
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            runTool();
+        });
+    }
+
+    if (ipInfoBtn) {
+        ipInfoBtn.addEventListener('click', () => {
+            runTool(true, { tool: 'ip-info', host: 'external' });
         });
     }
 

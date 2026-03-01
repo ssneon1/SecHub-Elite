@@ -53,7 +53,7 @@ void print_packet_info(const std::string &target, int port,
 
 int main(int argc, char *argv[]) {
   if (argc < 4) {
-    std::cout << "Usage: " << argv[0] << " <target_ip> <port> <tcp|udp>"
+    std::cout << "Usage: " << argv[0] << " <target_ip> <port> <tcp|udp> [source_ip]"
               << std::endl;
     return 1;
   }
@@ -61,6 +61,7 @@ int main(int argc, char *argv[]) {
   std::string target = argv[1];
   int port = std::stoi(argv[2]);
   std::string mode = argv[3];
+  std::string source_ip = (argc > 4 ? argv[4] : "");
 
   WSADATA wsaData;
   if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -69,6 +70,9 @@ int main(int argc, char *argv[]) {
   }
 
   print_packet_info(target, port, mode);
+  if (!source_ip.empty()) {
+    std::cout << "[*] Using Source IP: " << source_ip << std::endl;
+  }
 
   // In a real raw socket scenario (e.g., Linux), we would use SOCK_RAW.
   // On Windows, SIO_RCVALL and raw sockets are restricted.
@@ -80,6 +84,21 @@ int main(int argc, char *argv[]) {
               << std::endl;
     WSACleanup();
     return 1;
+  }
+
+  if (!source_ip.empty()) {
+    sockaddr_in src_addr;
+    src_addr.sin_family = AF_INET;
+    src_addr.sin_port = 0; // Let OS pick port
+    src_addr.sin_addr.s_addr = inet_addr(source_ip.c_str());
+    if (src_addr.sin_addr.s_addr == INADDR_NONE) {
+        InetPtonA(AF_INET, source_ip.c_str(), &src_addr.sin_addr);
+    }
+    
+    if (bind(s, (sockaddr*)&src_addr, sizeof(src_addr)) == SOCKET_ERROR) {
+      std::cerr << "[!] Could not bind to source IP " << source_ip << ": " << WSAGetLastError() << std::endl;
+      // We continue anyway for educational simulation, but real tool would fail
+    }
   }
 
   sockaddr_in dest;

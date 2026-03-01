@@ -13,6 +13,8 @@ TOOLS_DIR = os.path.join(os.path.dirname(BASE_DIR), "tools")
 SLOWLORIS_PATH = os.path.join(TOOLS_DIR, "python", "slowloris_sim.py")
 SLOWLORIS_TEST_PATH = os.path.join(TOOLS_DIR, "python", "test_slowloris.py")
 HPING_PY_PATH = os.path.join(TOOLS_DIR, "python", "hping_lite.py")
+BOTNET_PATH = os.path.join(TOOLS_DIR, "python", "botnet_sim.py")
+REFLECTION_PATH = os.path.join(TOOLS_DIR, "python", "udp_reflector_sim.py")
 DOS_SYSTEM_PATH = os.path.join(TOOLS_DIR, "dos_system.py")
 HPING_PATH = os.path.join(TOOLS_DIR, "cpp", "hping_lite.exe")
 
@@ -26,36 +28,68 @@ def run_tool():
     tool = data.get('tool')
     host = data.get('host')
     port = data.get('port', '80')
-    extra = data.get('extra', '')
+    extra = data.get('extra', '') # Can be sockets, bot count, or reflector IP
+    ips = data.get('ips', '')
+    rotate = data.get('rotate', False)
+    flood = data.get('flood', False)
+    path = data.get('path', '/')
+    cache_bust = data.get('cache_bust', False)
 
-    if not host:
+    if not host and tool in ['discover', 'lab-server', 'ip-info', 'test-slowloris']:
+        host = 'localhost' if tool in ['lab-server', 'test-slowloris'] else 'system'
+        
+    if not host and tool not in ['discover', 'lab-server', 'ip-info', 'test-slowloris']:
         return {"error": "Target host is required"}, 400
 
     def generate_output():
         cmd = []
         if tool == 'slowloris':
-            # Run the Python Slowloris simulation with -u for unbuffered output
-            cmd = [sys.executable, "-u", SLOWLORIS_PATH, host, "-p", str(port), "-s", str(extra or 150)]
+            # Run slowloris via dos_system.py with -y flag
+            cmd = [sys.executable, DOS_SYSTEM_PATH, '-y', 'slowloris', host, '-p', str(port), '-s', str(extra or 150)]
+            if ips: cmd.extend(['--ips', ips])
+            if path: cmd.extend(['--path', path])
+            if cache_bust: cmd.append('--cache-bust')
+            if flood: cmd.append('--flood')
+        elif tool == 'botnet':
+            # Run botnet simulation with target, port, and bot count
+            cmd = [sys.executable, DOS_SYSTEM_PATH, '-y', 'botnet', host, '-p', str(port), '-b', str(extra or 3), '--ips', ips]
+            if rotate: cmd.append('--rotate')
+            if flood: cmd.append('--flood')
+        elif tool == 'reflection':
+            # Run reflection via dos_system.py with -y flag
+            cmd = [sys.executable, DOS_SYSTEM_PATH, '-y', 'reflection', host, extra, '-p', str(port)]
+        elif tool == 'discover':
+            cmd = [sys.executable, DOS_SYSTEM_PATH, '-y', 'discover']
+        elif tool == 'ip-info':
+            cmd = [sys.executable, DOS_SYSTEM_PATH, '-y', 'ip-info']
+        elif tool == 'lab-server':
+            cmd = [sys.executable, DOS_SYSTEM_PATH, '-y', 'lab-server']
         elif tool == 'test-slowloris':
-            # Run the unit tests for slowloris
             cmd = [sys.executable, SLOWLORIS_TEST_PATH]
-        elif tool == 'dos-system':
-            # Run the system wrapper (help menu or status)
-            cmd = [sys.executable, DOS_SYSTEM_PATH, "--help"]
         elif tool == 'hping':
             # Check if C++ utility exists
-            if not os.path.exists(HPING_PATH):
-                cpp_src = os.path.join(TOOLS_DIR, "cpp", "hping_lite.cpp")
-                try:
-                    yield f"data: {json.dumps({'text': '[*] Attempting to compile C++ utility...', 'color': 'info'})}\n\n"
-                    # Try to compile with g++ if available
-                    subprocess.run(["g++", cpp_src, "-o", HPING_PATH, "-lws2_32"], check=True, capture_output=True)
-                    cmd = [HPING_PATH, host, str(port), extra or 'tcp']
-                except Exception:
-                    yield f"data: {json.dumps({'text': '[!] C++ Compiler (g++) not found. Falling back to Python module...', 'color': 'warning'})}\n\n"
-                    cmd = [sys.executable, "-u", HPING_PY_PATH, host, str(port), extra or 'tcp']
-            else:
-                cmd = [HPING_PATH, host, str(port), extra or 'tcp']
+                if not os.path.exists(HPING_PATH):
+                    cpp_src = os.path.join(TOOLS_DIR, "cpp", "hping_lite.cpp")
+                    try:
+                        yield f"data: {json.dumps({'text': '[*] Attempting to compile C++ utility...', 'color': 'info'})}\n\n"
+                        subprocess.run(["g++", cpp_src, "-o", HPING_PATH, "-lws2_32"], check=True, capture_output=True)
+                        cmd = [HPING_PATH, host, str(port), extra or 'tcp']
+                        if ips: cmd.append(ips.split(',')[0])
+                    except Exception:
+                        yield f"data: {json.dumps({'text': '[!] C++ Compiler (g++) not found. Falling back to Python module...', 'color': 'warning'})}\n\n"
+                        cmd = [sys.executable, "-u", HPING_PY_PATH, host, str(port), extra or 'tcp']
+                        if ips: cmd.append(ips)
+                        if rotate: cmd.append("--continuous")
+                else:
+                    # Prefer Python for rotation/flood features
+                    if rotate or flood:
+                        cmd = [sys.executable, "-u", HPING_PY_PATH, host, str(port), extra or 'tcp']
+                        if ips: cmd.extend(["--ips", ips])
+                        if rotate: cmd.append("--continuous")
+                        if flood: cmd.append("--flood")
+                    else:
+                        cmd = [HPING_PATH, host, str(port), extra or 'tcp']
+                        if ips: cmd.append(ips.split(',')[0])
         else:
             yield f"data: {json.dumps({'text': '[!] Unknown tool requested.', 'color': 'error'})}\n\n"
             return
@@ -115,4 +149,4 @@ if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     print(f"[*] Hub Uplink Established: http://127.0.0.1:{port}")
     print("="*50)
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, debug=True)

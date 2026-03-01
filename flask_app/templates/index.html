@@ -70,15 +70,26 @@
                             <div class="input-group">
                                 <label>Vector Selection</label>
                                 <select id="tool-select">
-                                    <option value="slowloris">🕸️ Slowloris (HTTP Resource Exhaustion)</option>
-                                    <option value="hping">📡 hping-lite (Custom Packet Crafting)</option>
+                                    <option value="slowloris">🕸️ Slowloris (Resource Exhaustion)</option>
+                                    <option value="botnet">🤖 Botnet Orchestrator (Distributed Attack)</option>
+                                    <option value="reflection">🔍 UDP Reflection (Spoofing Simulation)</option>
+                                    <option value="hping">📡 hping-lite (Custom Packets)</option>
+                                    <option value="discover">🔎 IP Discovery (Find Source IPs)</option>
+                                    <option value="lab-server">🔬 Lab Server (Start Vulnerable Host)</option>
                                     <option value="test-slowloris">🧪 Diagnostic Self-Test</option>
-                                    <option value="dos-system">📋 System Wrapper Help</option>
                                 </select>
                             </div>
+                            <div class="input-group" id="ips-group">
+                                <label>Source IP Pool (comma-separated)</label>
+                                <input type="text" id="ips-input" placeholder="e.g. 192.168.1.10,192.168.1.11">
+                            </div>
                             <div class="input-group" id="host-group">
-                                <label>Target Domain / IP</label>
+                                <label id="host-label">Target Domain / IP</label>
                                 <input type="text" id="host-input" placeholder="e.g. internal-lab-01">
+                            </div>
+                            <div class="input-group hidden" id="path-group">
+                                <label>Target Path</label>
+                                <input type="text" id="path-input" value="/" placeholder="e.g. /login or /search">
                             </div>
                             <div class="input-row" id="params-row">
                                 <div class="input-group">
@@ -89,6 +100,20 @@
                                     <label id="extra-label">Sockets</label>
                                     <input type="text" id="extra-input" value="150">
                                 </div>
+                            </div>
+                            <div class="input-group checkbox-group hidden" id="rotate-group">
+                                <label class="check-item">
+                                    <input type="checkbox" id="rotate-input">
+                                    <span>Continuous IP Rotation (1s interval)</span>
+                                </label>
+                                <label class="check-item" id="flood-item">
+                                    <input type="checkbox" id="flood-input">
+                                    <span class="flood-label">Volumetric Flood Mode (High Frequency)</span>
+                                </label>
+                                <label class="check-item hidden" id="cache-bust-item">
+                                    <input type="checkbox" id="cache-bust-input">
+                                    <span>Bypass Caching (Cache Busting)</span>
+                                </label>
                             </div>
                             <div class="warning-notice">
                                 <i data-lucide="alert-octagon"></i>
@@ -115,6 +140,9 @@
                                 </div>
                                 <button id="clear-btn" class="icon-only" title="Clean Terminal">
                                     <i data-lucide="trash"></i>
+                                </button>
+                                <button id="ip-info-btn" class="icon-only" title="Fetch Public IP">
+                                    <i data-lucide="globe"></i>
                                 </button>
                             </div>
                             <div id="terminal" class="terminal-body">
