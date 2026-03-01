@@ -114,6 +114,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 hostGroup.classList.add('hidden');
                 paramsRow.classList.add('hidden');
                 ipsGroup.classList.add('hidden');
+            } else if (val === 'site-check') {
+                rotateGroup.classList.add('hidden');
+                floodItem.classList.add('hidden');
+                pathGroup.classList.add('hidden');
+                cacheBustItem.classList.add('hidden');
+                extraGroup.classList.add('hidden');
+                ipsGroup.classList.add('hidden');
             }
         });
     }

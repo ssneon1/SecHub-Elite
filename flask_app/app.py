@@ -4,6 +4,8 @@ import os
 import sys
 import json
 import time
+import socket
+import requests
 
 app = Flask(__name__)
 
@@ -17,6 +19,35 @@ BOTNET_PATH = os.path.join(TOOLS_DIR, "python", "botnet_sim.py")
 REFLECTION_PATH = os.path.join(TOOLS_DIR, "python", "udp_reflector_sim.py")
 DOS_SYSTEM_PATH = os.path.join(TOOLS_DIR, "dos_system.py")
 HPING_PATH = os.path.join(TOOLS_DIR, "cpp", "hping_lite.exe")
+
+@app.route('/check', methods=['POST'])
+def check_target():
+    data = request.json
+    host = data.get('host')
+    port = data.get('port', 80)
+    
+    if not host:
+        return {"error": "Target host is required"}, 400
+    
+    results = {"http": "UNKNOWN", "tcp": "UNKNOWN"}
+    
+    # TCP Check
+    try:
+        with socket.create_connection((host, int(port)), timeout=3):
+            results["tcp"] = "REACHABLE"
+    except Exception:
+        results["tcp"] = "UNREACHABLE"
+        
+    # HTTP Check
+    try:
+        url = f"http://{host}:{port}" if ":" not in host else host
+        if not url.startswith("http"): url = f"http://{url}"
+        r = requests.get(url, timeout=3, verify=False)
+        results["http"] = f"REACHABLE ({r.status_code})"
+    except Exception as e:
+        results["http"] = f"UNREACHABLE"
+        
+    return results
 
 @app.route('/')
 def index():
@@ -64,6 +95,15 @@ def run_tool():
             cmd = [sys.executable, DOS_SYSTEM_PATH, '-y', 'ip-info']
         elif tool == 'lab-server':
             cmd = [sys.executable, DOS_SYSTEM_PATH, '-y', 'lab-server']
+        elif tool == 'site-check':
+            yield f"data: {json.dumps({'text': f'[*] Running connectivity check on {host}:{port}...', 'color': 'info'})}\n\n"
+            # Simulate the check results in the log stream
+            try:
+                with socket.create_connection((host, int(port)), timeout=3):
+                    yield f"data: {json.dumps({'text': '[+] TCP Connectivity: REACHABLE', 'color': 'success'})}\n\n"
+            except:
+                yield f"data: {json.dumps({'text': '[!] TCP Connectivity: UNREACHABLE', 'color': 'error'})}\n\n"
+            return
         elif tool == 'test-slowloris':
             cmd = [sys.executable, SLOWLORIS_TEST_PATH]
         elif tool == 'hping':
