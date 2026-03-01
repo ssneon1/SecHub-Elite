@@ -24,8 +24,18 @@ A premium dark-themed, SOC-style web interface built with standard HTML/CSS/JS a
 * **Network Monitor:** A built-in, Wireshark-style data table that dynamically parses logs to display live mock "packet captures" and connection statistics.
 
 ### 2. Embedded Security Simulators (In `./tools/`)
+The `tools/` directory contains the engine for scanning. You do **not** need to run these files manually; the Web Dashboard manages them for you.
 * **`slowloris_sim.py`**: A Python implementation of the classic Slowloris attack. It demonstrates how "low-and-slow" attacks can exhaust thread pools on traditional synchronous web servers (like Apache) without requiring high bandwidth.
-* **`hping_lite`**: A custom packet routing simulator built to mimic traditional `hping3` behaviors. Features both a C++ implementation (for high performance) and a Python fallback (for systems without a compiler).
+* **`hping_lite`**: A custom packet routing simulator built to mimic traditional `hping3` behaviors. Features both a **C++ implementation** (`tools/cpp/`) for high performance and a **Python fallback** (`tools/python/`) for systems without a C++ compiler.
+
+---
+
+## 📂 Folder Structure & Tool Execution
+
+*   **`flask_app/app.py`**: The **only** file you need to run. It serves the web interface and acts as the "Master Controller."
+*   **`tools/python/`**: Contains Python versions of all security tools.
+*   **`tools/cpp/`**: Contains C++ source code for high-performance scanning.
+*   **Execution Flow**: When you start a scan from the browser, `app.py` automatically picks the best available tool (preferring C++ for speed, falling back to Python if needed) and runs it in the background.
 
 ### 3. Master Compliance Handbook
 Integrated directly into the Web Dashboard is a comprehensive, interactive guide detailing modern defensive architectures:
@@ -58,6 +68,7 @@ Integrated directly into the Web Dashboard is a comprehensive, interactive guide
    ```
 
 3. **Launch the Hub:**
+   Running `app.py` is the **only** step required to start the entire system. All other tools are managed automatically.
    ```bash
    cd flask_app
    python app.py
